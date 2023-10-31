@@ -5,9 +5,12 @@ services:
       context: ./web
       dockerfile: Dockerfile
     ports:
-      - "8080:8080"
+      - "8080:443"
     networks:
       - mynetwork
+    volumes:
+      - certs:/etc/ssl/certs
+      - private:/etc/ssl/private
 
   app:
     build:
@@ -15,11 +18,18 @@ services:
       dockerfile: Dockerfile
       args:
         CLIENT_ID: 05a14c86-fbe8-4721-9099-0f134ee68a26
-        CLIENT_SECRET: gUI8Q~6CifSh9PMzu.~tKTQtwc4Lnm_sIEyAqat5
+        CLIENT_SECRET: N1M8Q~CIOpzfcmQRvROWRVham1I2DpDl3_Sf8aKC
     ports:
       - "8000:8000"
     networks:
       - mynetwork
+    volumes:
+      - certs:/etc/ssl/certs
+      - private:/etc/ssl/private
+
+volumes:
+  certs:
+  private:
 
 networks:
   mynetwork:
