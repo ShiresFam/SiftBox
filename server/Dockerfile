@@ -17,4 +17,4 @@ RUN pip install -r requirements.txt
 ENV PORT=8000
 EXPOSE 8000
 
-CMD exec uvicorn app.main:app --port ${PORT}
+CMD exec uvicorn app.main:app --host 0.0.0.0 --port $PORT

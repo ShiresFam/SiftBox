@@ -1,0 +1,25 @@
+version: '3'
+services:
+  nginx:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    networks:
+      - mynetwork
+
+  app:
+    build:
+      context: ./server/
+      dockerfile: Dockerfile
+      args:
+        CLIENT_ID: 05a14c86-fbe8-4721-9099-0f134ee68a26
+        CLIENT_SECRET: gUI8Q~6CifSh9PMzu.~tKTQtwc4Lnm_sIEyAqat5
+    ports:
+      - "8000:8000"
+    networks:
+      - mynetwork
+
+networks:
+  mynetwork:

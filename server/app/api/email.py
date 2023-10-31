@@ -11,6 +11,7 @@ from app.core.email.outlook_email import get_user_emails
 router = APIRouter(prefix="/auth")
 mail_router = APIRouter(prefix="/mail")
 credentials = (os.getenv("CLIENT_ID"), os.getenv("CLIENT_SECRET"))
+print(f"credentials: {credentials}")
 my_scopes = ["https://graph.microsoft.com/.default", "offline_access"]
 
 
@@ -28,7 +29,7 @@ class EmailResponse(BaseModel):
 @router.get("/stepone")
 async def auth_step_one():
     # callback = absolute url to auth_step_two_callback() page, https://domain.tld/steptwo
-    callback = "https://127.0.0.1:8000/auth/steptwo"  # Example
+    callback = "http://localhost:8000/auth/steptwo"  # Example
 
     account = Account(credentials, token_backend=token_backend)
     url, state = account.con.get_authorization_url(
@@ -54,7 +55,7 @@ async def auth_step_two_callback(request: Request):
     my_saved_state = storedState  # example...
 
     # rebuild the redirect_uri used in auth_step_one
-    callback = "https://127.0.0.1:8000/auth/steptwo"  # Example
+    callback = "http://localhost:8000/auth/steptwo"  # Example
     print("callback")
     print(callback)
 
@@ -68,7 +69,7 @@ async def auth_step_two_callback(request: Request):
     # if result is True, then authentication was successful
     # and the auth token is stored in the token backend
     if result:
-        return RedirectResponse(url="https://127.0.0.1:3000")
+        return RedirectResponse(url="http://localhost:8080")
 
     raise HTTPException(status_code=400, detail="Authentication failed")
 
@@ -80,7 +81,7 @@ async def get_user(request: Request):
         return account.get_current_user().display_name
     else:
         return JSONResponse(
-            {"redirect": True, "url": "https://localhost:8000/auth/stepone"},
+            {"redirect": True, "url": "http://localhost:8080/api/auth/stepone"},
             status_code=307,
         )
 
