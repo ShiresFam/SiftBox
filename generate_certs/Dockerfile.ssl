@@ -1,0 +1,7 @@
+FROM debian:bookworm
+COPY check-certs.sh /check-certs.sh
+RUN apt-get update && apt-get install -y openssl
+
+RUN chmod +x /check-certs.sh
+
+CMD ["/check-certs.sh"]

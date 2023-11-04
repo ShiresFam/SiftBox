@@ -32,8 +32,10 @@ const Home = () => {
     useEffect(() => {
         const fetchEmails = async () => {
             const fetchedEmails = await getEmails();
-            setEmails(fetchedEmails['emails']);
-            setUnread(fetchedEmails['unread_count']);
+            if (fetchedEmails !== null) {
+                setEmails(fetchedEmails['emails']);
+                setUnread(fetchedEmails['unread_count']);
+            }
         }
         fetchEmails();
     }, [displayName])

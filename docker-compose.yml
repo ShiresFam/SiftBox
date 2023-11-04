@@ -1,5 +1,12 @@
 version: '3'
 services:
+  cert-gen:
+    build:
+      context: ./generate_certs
+      dockerfile: Dockerfile.ssl
+    volumes:
+      - certs:/etc/ssl/certs
+      - private:/etc/ssl/private
   nginx:
     build:
       context: ./web
@@ -11,7 +18,10 @@ services:
     volumes:
       - certs:/etc/ssl/certs
       - private:/etc/ssl/private
-
+    depends_on:
+      - cert-gen
+      - app
+    command: [ "/wait-for-cert-gen.sh", "nginx", "-g", "daemon off;" ]
   app:
     build:
       context: ./server/
@@ -26,10 +36,24 @@ services:
     volumes:
       - certs:/etc/ssl/certs
       - private:/etc/ssl/private
-
+    depends_on:
+      - cert-gen
+    command:
+      [
+        "/wait-for-cert-gen.sh",
+        "uvicorn",
+        "app.main:app",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "8000",
+        "--ssl-keyfile",
+        "/etc/ssl/private/nginx-selfsigned.key",
+        "--ssl-certfile",
+        "/etc/ssl/certs/nginx-selfsigned.crt"
+      ]
 volumes:
   certs:
   private:
-
 networks:
   mynetwork:
