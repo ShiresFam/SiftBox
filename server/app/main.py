@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.email import router as auth_router
 from app.api.email import mail_router
+from app.db.models import init_db
 
 app = FastAPI()
 
@@ -53,4 +54,4 @@ app.include_router(mail_router)
 
 @app.on_event("startup")
 async def on_startup():
-    print("Started")
+    init_db()

@@ -1,13 +1,19 @@
 import json
 import os
-from fastapi import Request, Response, HTTPException, APIRouter
+from fastapi import Request, Response, HTTPException, APIRouter, Depends
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from O365 import Account
 from typing import List, Optional
-
+from sqlalchemy.orm import Session
 from pydantic import BaseModel
+from app.db.models import get_db
 from app.utils.o365_token import token_backend
-from app.core.email.outlook_email import get_user_emails
+from app.core.email.outlook_email import (
+    get_user_emails,
+    mark_as_read,
+    reply_to_email,
+    logout,
+)
 from app.schemas.email import (
     Email,
     EmailMetadata,
@@ -20,8 +26,11 @@ from app.schemas.email import (
 from app.core.llm.chatgpt import (
     create_todo_list,
     send_email_metadata,
+    suggestResponse,
     summarize_emails,
+    summarize_single_email,
 )
+import app.db.crud as crud
 from datetime import datetime
 
 router = APIRouter(prefix="/auth")
@@ -104,12 +113,50 @@ async def get_user(request: Request):
         )
 
 
+@router.get("/logout")
+async def logout_0365(request: Request):
+    account = Account(credentials, token_backend=token_backend)
+    logout(account)
+    return JSONResponse({"message": "Logged out successfully"}, status_code=200)
+
+
+@mail_router.post("/reply/{email_id}")
+async def reply(request: Request, email_id: str = None):
+    account = Account(credentials, token_backend=token_backend)
+    if account.is_authenticated:
+        reply_text = await request.body()
+        reply_to_email(account, email_id, reply_text)
+        return JSONResponse({"message": "Reply sent successfully"}, status_code=200)
+    else:
+        return JSONResponse(
+            {"message": "Not logged in"},
+            status_code=401,
+        )
+
+
+@mail_router.get("/mark-as-read/{email_id}")
+async def mark_read(
+    request: Request, db: Session = Depends(get_db), email_id: str = None
+):
+    account = Account(credentials, token_backend=token_backend)
+    if account.is_authenticated:
+        mark_as_read(account, email_id)
+        crud.delete_email_by_id(db, email_id)
+        return JSONResponse({"message": "Email marked as read"}, status_code=200)
+    else:
+        return JSONResponse(
+            {"message": "Not logged in"},
+            status_code=401,
+        )
+
+
 @mail_router.get("/unread")
-async def get_unread(request: Request):
+async def get_unread(request: Request, db: Session = Depends(get_db)):
     account = Account(credentials, token_backend=token_backend)
     if account.is_authenticated:
         email_data = get_user_emails(account)
         emails = [Email(**email) for email in email_data["emails"]]
+        crud.create_emails(db, emails)
 
         return EmailResponse(unread_count=email_data["unread_count"], emails=emails)
 
@@ -117,53 +164,90 @@ async def get_unread(request: Request):
         account.con.refresh_token()
         email_data = get_user_emails(account)
         emails = [Email(**email) for email in email_data["emails"]]
+        crud.create_emails(db, emails)
 
         return EmailResponse(unread_count=email_data["unread_count"], emails=emails)
 
 
-@mail_router.get("/metadata")
-async def check_metadata(request: Request):
-    account = Account(credentials, token_backend=token_backend)
-    if account.is_authenticated:
-        email_data = get_user_emails(account)
-        email_metadata = [EmailMetadata(**email) for email in email_data["emails"]]
-        emails = [Email(**email) for email in email_data["emails"]]
-        important_response = await send_email_metadata(emails)
-        print(f"Imporant response: {important_response}")
-        print(f"length of important response: {len(important_response)}")
-        important_ids = [email.id for email in important_response if email.is_important]
-        print(f"Imporant ids: {important_ids}")
-        print(f"length of important ids: {len(important_ids)}")
-        important_emails = [email for email in emails if email.id in important_ids]
-        print(f"length of important emails: {len(important_emails)}")
-        summaries: list[EmailSummary] = await summarize_emails(important_emails)
-        print(f"length of summaries: {len(summaries)}")
-        todo_emails = [
-            Email(
-                **{
-                    **email.dict(),
-                    "created": email.created.isoformat()
-                    if isinstance(email.created, datetime)
-                    else email.created,
-                    "priority_rating": next(
-                        (
-                            e.priority_rating
-                            for e in important_response
-                            if e.id == email.id
-                        ),
-                        None,
-                    ),
-                    "summary": next(
-                        (s.summary for s in summaries if s.id == email.id),
-                        None,
-                    ),
-                }
-            )
-            for email in emails
-            if email.id in important_ids
-        ]
+@mail_router.get("/create-important")
+async def get_email_db(request: Request, db: Session = Depends(get_db)):
+    emails = crud.get_emails(db)
+    important_response = await send_email_metadata(emails)
+    print(important_response)
+    crud.create_email_important_bulk(db, important_response)
+    crud.update_priority_ratings(db, important_response)
+    all_important = crud.get_email_important_bulk(db)
+    return all_important
 
-        todo_list = await create_todo_list(todo_emails)
 
-        print(f"Todolist: {todo_list}")
-        return todo_list
+@mail_router.get("/get-important")
+async def get_important_emails(request: Request, db: Session = Depends(get_db)):
+    important_emails = crud.get_email_important_bulk(db)
+    return important_emails
+
+
+@mail_router.get("/get-important/emails")
+async def get_important_emails(request: Request, db: Session = Depends(get_db)):
+    important_emails = crud.get_important_emails(db)
+    return important_emails
+
+
+@mail_router.get("/create-summaries")
+async def create_summaries(request: Request, db: Session = Depends(get_db)):
+    important_emails = crud.get_important_emails(db)
+    summaries: list[EmailSummary] = await summarize_emails(important_emails)
+    crud.update_email_summaries(db, summaries)
+    return summaries
+
+
+@mail_router.get("/create-summary/{email_id}")
+async def create_summary(
+    request: Request, db: Session = Depends(get_db), email_id: str = None
+):
+    email = crud.get_email(db, email_id)
+    summary: EmailSummary = await summarize_single_email(email)
+    crud.update_email_summary(db, summary)
+    updated_email = crud.get_email(db, email_id)
+    return updated_email
+
+
+@mail_router.get("/create-todolist")
+async def create_todolist(request: Request, db: Session = Depends(get_db)):
+    important_emails = crud.get_important_emails(db)
+    crud.delete_all_todos(db)
+    todo_list: TodoList = await create_todo_list(important_emails)
+    created_list = crud.create_todos_bulk(db, todo_list.todo)
+    return created_list
+
+
+@mail_router.get("/todolist")
+async def get_todolist(request: Request, db: Session = Depends(get_db)):
+    todo_list = crud.get_todos(db)
+    return todo_list
+
+
+@mail_router.get("/response/{email_id}")
+async def get_response(
+    request: Request, db: Session = Depends(get_db), email_id: str = None
+):
+    email = crud.get_email(db, email_id)
+    response = await suggestResponse(email)
+    return response
+
+
+@mail_router.put("/todo-complete/{todo_id}")
+async def complete_todo(
+    request: Request, db: Session = Depends(get_db), todo_id: int = None
+):
+    crud.set_todo_completed(db, todo_id)
+    return JSONResponse(
+        status_code=200, content={"message": "Todo marked as completed"}
+    )
+
+
+@mail_router.put("/todo-delete/{todo_id}")
+async def delete_todo(
+    request: Request, db: Session = Depends(get_db), todo_id: int = None
+):
+    crud.set_todo_deleted(db, todo_id)
+    return JSONResponse(status_code=200, content={"message": "Todo marked as deleted"})

@@ -12,11 +12,11 @@ const rotate = keyframes`
 `;
 
 const RotatingLogo = styled('img')({
-    animation: `${rotate} 4s linear infinite`,
+  animation: `${rotate} 4s linear infinite`,
 });
 
-const Loading = () => (
-    <RotatingLogo src={Logo} alt="Loading..." width="75" height="75" />
+const Loading = ({ size }) => (
+  <RotatingLogo src={Logo} alt="Loading..." width={size} height={size} />
 );
 
 export default Loading;

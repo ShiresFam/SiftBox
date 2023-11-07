@@ -1,6 +1,9 @@
-from pydantic import BaseModel
+import uuid
+from pydantic import BaseModel, ConfigDict, Field
 from typing import List, Optional
+from uuid import UUID
 from datetime import datetime
+from app.schemas.utils import to_camel
 
 
 class EmailMetadata(BaseModel):
@@ -16,12 +19,18 @@ class EmailMetadata(BaseModel):
 
 
 class Email(EmailMetadata):
+    model_config = ConfigDict(
+        from_attributes=True, populate_by_name=True, alias_generator=to_camel
+    )
     content: str
     priority_rating: Optional[int] = None
     summary: Optional[str] = None
 
 
 class EmailImportant(BaseModel):
+    model_config = ConfigDict(
+        from_attributes=True, populate_by_name=True, alias_generator=to_camel
+    )
     id: str
     is_important: bool
     is_spam: bool
@@ -40,9 +49,20 @@ class EmailSummary(BaseModel):
     summary: str
 
 
+class EmailResponse(BaseModel):
+    id: str
+    response: str
+
+
 class Todo(BaseModel):
+    model_config = ConfigDict(
+        from_attributes=True, populate_by_name=True, alias_generator=to_camel
+    )
+    id: Optional[str] = None
     task: str
     priority: int
+    is_completed: Optional[bool] = False
+    is_deleted: Optional[bool] = False
 
 
 class TodoList(BaseModel):

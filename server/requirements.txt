@@ -3,3 +3,4 @@ uvicorn[standard]
 O365
 beautifulsoup4
 openai
+sqlalchemy

@@ -37,3 +37,27 @@ def get_user_emails(account: Account):
         count += 1
         emails.append(email)
     return {"unread_count": count, "emails": emails}
+
+
+def reply_to_email(account: Account, email_id: str, reply_text: str):
+    mailbox = account.mailbox()
+    message = mailbox.get_message(email_id)
+    if message:
+        message.reply(body=reply_text)
+    else:
+        print(f"No email found with id {email_id}")
+
+
+def logout(account: Account):
+    if account.is_authenticated:
+        account.con.token_backend.delete_token()
+
+
+def mark_as_read(account: Account, email_id: str):
+    mailbox = account.mailbox()
+    message = mailbox.get_message(email_id)
+    if message:
+        read = message.mark_as_read()
+        print(read)
+    else:
+        print(f"No email found with id {email_id}")

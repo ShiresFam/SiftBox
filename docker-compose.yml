@@ -27,9 +27,8 @@ services:
     build:
       context: ./server/
       dockerfile: Dockerfile
-      args:
-        CLIENT_ID: 05a14c86-fbe8-4721-9099-0f134ee68a26
-        CLIENT_SECRET: N1M8Q~CIOpzfcmQRvROWRVham1I2DpDl3_Sf8aKC
+    env_file:
+      - .env
     ports:
       - "8000:8000"
     networks:
