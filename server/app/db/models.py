@@ -57,7 +57,7 @@ class Todo(Base):
     is_deleted = Column(Boolean, default=False)
 
 
-engine = create_engine("sqlite:///emails.db")
+engine = create_engine("sqlite:////data/mydatabase.db")
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 

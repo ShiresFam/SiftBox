@@ -28,7 +28,7 @@ services:
       context: ./server/
       dockerfile: Dockerfile
     env_file:
-      - .env
+      - ./server/.env
     ports:
       - "8000:8000"
     networks:
@@ -36,6 +36,7 @@ services:
     volumes:
       - certs:/etc/ssl/certs
       - private:/etc/ssl/private
+      - db-data:/data
     depends_on:
       - cert-gen
     command:
@@ -55,5 +56,6 @@ services:
 volumes:
   certs:
   private:
+  db-data:
 networks:
   mynetwork:

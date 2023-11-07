@@ -122,6 +122,7 @@ async def logout_0365(request: Request):
 
 @mail_router.post("/reply/{email_id}")
 async def reply(request: Request, email_id: str = None):
+    print(email_id)
     account = Account(credentials, token_backend=token_backend)
     if account.is_authenticated:
         reply_text = await request.body()

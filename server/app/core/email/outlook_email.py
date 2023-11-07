@@ -43,7 +43,10 @@ def reply_to_email(account: Account, email_id: str, reply_text: str):
     mailbox = account.mailbox()
     message = mailbox.get_message(email_id)
     if message:
-        message.reply(body=reply_text)
+        reply_data = json.loads(reply_text)
+        new_msg = message.reply()
+        new_msg.body = reply_data["reply"]
+        new_msg.send()
     else:
         print(f"No email found with id {email_id}")
 

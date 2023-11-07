@@ -36,6 +36,7 @@ const StyledCard = styled('div')(({ theme }) => ({
     width: '30%',
     flex: '1 1 auto',
     margin: theme.spacing(2),
+    overflowX: 'hidden',
     overflowY: 'auto',
     display: 'flex',
     flexDirection: 'column',
@@ -58,6 +59,7 @@ const Home = () => {
     const [unread, setUnread] = useState(0);
     const [summary, setSummary] = useState('');
     const [suggestedResponse, setSuggestedResponse] = useState('');
+    const [suggestedId, setSuggestedId] = useState('');
     const [isSummaryLoading, setSummaryLoading] = useState(false);
     const [importantEmails, setImportantEmails] = useState([]);
     const [importantRefreshing, setImportantRefreshing] = useState(false);
@@ -99,14 +101,15 @@ const Home = () => {
         const resp = await createResponse(email.id);
         console.log(resp.response)
         setSuggestedResponse(resp.response);
-
+        setSuggestedId(email.id);
     }
 
-    const handleSendResponse = async (email) => {
-        const resp = await replyToEmail(email.id, suggestedResponse);
+    const handleSendResponse = async () => {
+        const resp = await replyToEmail(suggestedId, suggestedResponse);
         console.log(resp);
         setResponseRequested(false);
         setSuggestedResponse('');
+        setSuggestedId('');
     }
 
     const handleTodoRefresh = async () => {
@@ -127,6 +130,7 @@ const Home = () => {
     const cancelResponse = () => {
         setResponseRequested(false);
         setSuggestedResponse('');
+        setSuggestedId('');
     }
 
     useEffect(() => {
