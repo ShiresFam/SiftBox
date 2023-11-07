@@ -14,6 +14,7 @@ ARG GENERATE_CERTS=false
 COPY ./nginx/nginx.conf /etc/nginx/nginx.conf
 
 EXPOSE 443
+EXPOSE 80
 
 COPY wait-for-cert-gen.sh /wait-for-cert-gen.sh
 RUN chmod +x /wait-for-cert-gen.sh

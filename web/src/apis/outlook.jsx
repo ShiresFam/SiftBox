@@ -11,3 +11,14 @@ export const getEmails = async () => {
         return null;
     }
 }
+
+export const getTodoList = async () => {
+    try {
+        const response = await fetch(baseUrl + '/mail/metadata');
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.log(error);
+        return null;
+    }
+}

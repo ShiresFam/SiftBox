@@ -12,7 +12,8 @@ services:
       context: ./web
       dockerfile: Dockerfile
     ports:
-      - "8080:443"
+      - "8080:80"
+      - "8443:443"
     networks:
       - mynetwork
     volumes:

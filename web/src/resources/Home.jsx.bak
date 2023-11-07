@@ -1,0 +1,78 @@
+import { useState, useEffect } from 'react';
+import { styled } from '@mui/material/styles';
+import { Typography } from '@mui/material';
+import { getUser } from '../apis/auth';
+import { getEmails } from '../apis/outlook';
+
+const WrapperDiv = styled('div')(() => ({
+    display: 'flex',
+    flexDirection: 'column',
+    width: '100%',
+    height: '100%',
+}));
+
+const StyledDiv = styled('div')(({ theme }) => ({
+    padding: theme.spacing(2),
+}));
+
+const FlexContainer = styled('div')({
+    display: 'flex',
+    justifyContent: 'space-between',
+});
+
+
+const Home = () => {
+    const [loading, setLoading] = useState(true);
+    const [displayName, setDisplayName] = useState('');
+    const [emails, setEmails] = useState([]);
+    const [unread, setUnread] = useState(0);
+
+    useEffect(() => {
+        console.log('use effect called')
+        const handleAuth = async () => {
+            console.log('hi')
+            const name = await getUser();
+            const dispName = name === " " ? 'User' : name;
+            setDisplayName(dispName);
+            setLoading(false);
+        }
+
+        handleAuth();
+    }, []);
+
+    useEffect(() => {
+        const fetchEmails = async () => {
+            const fetchedEmails = await getEmails();
+            if (fetchedEmails !== null) {
+                setEmails(fetchedEmails['emails']);
+                setUnread(fetchedEmails['unread_count']);
+            }
+        }
+        fetchEmails();
+    }, [displayName])
+
+    if (loading) {
+        return <p>Loading</p>
+    }
+    return (
+        <WrapperDiv>
+            <FlexContainer>
+                <StyledDiv>
+                    <Typography variant="h5">Unread Emails</Typography>
+                    {/* Display unread emails here */}
+                </StyledDiv>
+                <StyledDiv>
+                    <Typography variant="h5">Todo List</Typography>
+                    {/* Display todo list here */}
+                </StyledDiv>
+                <StyledDiv>
+                    <Typography variant="h5">Email Summaries</Typography>
+                    {/* Display email summaries here */}
+                </StyledDiv>
+            </FlexContainer>
+        </WrapperDiv>
+    )
+
+};
+
+export default Home;
