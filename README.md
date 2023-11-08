@@ -30,3 +30,5 @@ Once the application is running, you can access it at `https://localhost:8443`.
 - Reply to emails
 - Manage email threads
 - Create TODO List
+- Mark emails as read
+- Identify spam (Not implemented in front-end)
