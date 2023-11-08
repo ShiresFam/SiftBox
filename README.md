@@ -4,6 +4,10 @@
 
 SiftBox is an application that allows users to manage their emails. It provides features such as replying to emails, managing email threads, and more.
 
+## Demo
+
+[Here](https://youtu.be/iq9dsWxIXAQ) is a demo video that we created for our project.
+
 ## Installation
 
 To install and run SiftBox, you'll need Docker and Docker Compose installed on your machine. Then, follow these steps:
