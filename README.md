@@ -12,7 +12,7 @@ SiftBox is an application that allows users to manage their emails. It provides 
 
 To install and run SiftBox, you'll need Docker and Docker Compose installed on your machine. Then, follow these steps:
 
-1. Clone this repository: `git clone [https://github.com/goris29/SiftBox.git](https://github.com/ShiresFam/SiftBox)`
+1. Clone this repository: `git clone https://github.com/ShiresFam/SiftBox`
 2. Navigate to the project directory: `cd SiftBox`
 3. Create a `.env` file in the `./server` directory with the following variables:
     - `OPENAI_API_KEY`: Your OpenAI API key
